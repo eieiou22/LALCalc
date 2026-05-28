@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biometry Calculator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1a202c;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      font-size: 0.875rem;
+      color: #718096;
+      margin-bottom: 2rem;
+    }
+
+    .input-group {
+      margin-bottom: 1.25rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 0.375rem;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 0.625rem 0.875rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 1rem;
+      color: #2d3748;
+      transition: border-color 0.15s;
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+    }
+
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: #a0aec0;
+      margin-top: 0.25rem;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background: #3182ce;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: background 0.15s;
+    }
+
+    button:hover {
+      background: #2b6cb0;
+    }
+
+    button:active {
+      background: #2c5282;
+    }
+
+    .result-box {
+      margin-top: 1.75rem;
+      background: #ebf8ff;
+      border: 1.5px solid #bee3f8;
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      display: none;
+    }
+
+    .result-box.visible {
+      display: block;
+    }
+
+    .result-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #2b6cb0;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 0.3rem 0;
+      border-bottom: 1px solid #bee3f8;
+    }
+
+    .result-row:last-child {
+      border-bottom: none;
+    }
+
+    .result-name {
+      font-size: 0.9rem;
+      color: #4a5568;
+    }
+
+    .result-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #2c5282;
+    }
+
+    .error {
+      margin-top: 1rem;
+      color: #c53030;
+      font-size: 0.875rem;
+      display: none;
+    }
+
+    .error.visible {
+      display: block;
+    }
+
+    .divider {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 1.5rem 0;
+    }
+
+    .power-cross-container {
+      display: flex;
+      justify-content: center;
+      padding: 0.75rem 0 0.25rem;
+    }
+
+    #power-cross-canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Biometry Calculator</h1>
+    <p class="subtitle">Enter values rounded to the nearest hundredth</p>
+
+    <div class="input-group">
+      <label for="cyl">+Cyl (D)</label>
+      <input type="number" id="cyl" placeholder="e.g. 1.25" step="0.01">
+    </div>
+
+    <div class="input-group">
+      <label for="axis">Axis (°)</label>
+      <input type="number" id="axis" placeholder="e.g. 90.00" step="0.01" min="0" max="180">
+      <p class="hint">0 – 180°</p>
+    </div>
+
+    <div class="input-group">
+      <label for="targetSE">Target SE (D)</label>
+      <input type="number" id="targetSE" placeholder="e.g. -0.50" step="0.01">
+    </div>
+
+    <div class="input-group">
+      <label for="lalTarget">LAL treatment target (D)</label>
+      <input type="number" id="lalTarget" placeholder="e.g. -0.25" step="0.01">
+    </div>
+
+    <div class="divider"></div>
+
+    <button onclick="calculate()">Calculate</button>
+
+    <p class="error" id="error">Please fill in all four fields before calculating.</p>
+
+    <div class="result-box" id="results">
+      <div class="result-label">Results</div>
+      <div class="result-row">
+        <span class="result-name">Expected post-op refraction</span>
+        <span class="result-value" id="out-refraction">—</span>
+      </div>
+      <div class="result-row" style="display:block; padding-top: 0.75rem;">
+        <span class="result-name">Power cross</span>
+        <div class="power-cross-container">
+          <canvas id="power-cross-canvas" width="260" height="260"></canvas>
+        </div>
+      </div>
+      <div class="result-row" style="display:block; padding-top: 0.75rem;">
+        <p id="out-lal" style="font-size:0.9rem; color:#2d3748; line-height:1.6;"></p>
+      </div>
+      <div style="margin-top: 1rem; padding-top: 0.75rem;">
+        <p style="font-size:0.75rem; color:#718096; margin-bottom:0.25rem;">¹ Flatten up to 3 diopters.</p>
+        <p style="font-size:0.75rem; color:#718096;">² Steepen up to 4 diopters.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function calculate() {
+      const fields = ["cyl", "axis", "targetSE", "lalTarget"];
+      const values = {};
+      let valid = true;
+
+      fields.forEach(id => {
+        const val = parseFloat(document.getElementById(id).value);
+        if (isNaN(val)) valid = false;
+        values[id] = val;
+      });
+
+      const errorEl  = document.getElementById("error");
+      const resultEl = document.getElementById("results");
+
+      if (!valid) {
+        errorEl.classList.add("visible");
+        resultEl.classList.remove("visible");
+        return;
+      }
+
+      errorEl.classList.remove("visible");
+
+      // ── FORMULA BLOCK ──────────────────────────────────────────────
+      // sphere + (1/2 * cyl) = targetSE  →  solve for sphere
+      const sphere = values.targetSE - (0.5 * values.cyl);
+      // ───────────────────────────────────────────────────────────────
+
+      const sphereStr = sphere.toFixed(2);
+      const cylStr    = values.cyl.toFixed(2);
+      const axisStr   = values.axis.toFixed(0);
+      document.getElementById("out-refraction").textContent =
+        `${sphereStr} + ${cylStr} x ${axisStr}`;
+
+      drawPowerCross(sphere, values.cyl, values.axis);
+
+      // ── LAL output ─────────────────────────────────────────────────
+      const z = values.lalTarget;
+      const x = sphere - z;               // axis arm power minus LAL target
+      const y = (sphere + values.cyl) - z; // perp arm power minus LAL target
+
+      function meridianDesc(power) {
+        if (power < 0) return `<strong>flattening</strong> by ${Math.abs(power).toFixed(2)} diopters`;
+        if (power > 0) return `<strong>steepening</strong> by ${Math.abs(power).toFixed(2)} diopters`;
+        return `<strong>unchanged</strong> (0.00 diopters)`;
+      }
+
+      document.getElementById("out-lal").innerHTML =
+        `For an LAL treatment targeting ${z.toFixed(2)} D:<br>` +
+        `The first meridian is ${meridianDesc(x)}<br>` +
+        `The second meridian is ${meridianDesc(y)}.`;
+      // ───────────────────────────────────────────────────────────────
+
+      resultEl.classList.add("visible");
+    }
+
+    function drawPowerCross(sphere, cyl, axis) {
+      const canvas = document.getElementById('power-cross-canvas');
+      const ctx    = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      const cx = W / 2, cy = H / 2;
+      const armLen     = W * 0.36;
+      const labelGap   = 22;      // px beyond arm tip for power label
+      const meridianR  = armLen * 0.52; // radius for meridian degree label
+
+      ctx.clearRect(0, 0, W, H);
+
+      // Powers at each principal meridian
+      const powerAtAxis = sphere;          // cyl doesn't act along its own axis
+      const powerAtPerp = sphere + cyl;    // full cyl acts in the perpendicular meridian
+
+      // Direction vectors (canvas y is flipped relative to optics convention)
+      const axisRad = (axis * Math.PI) / 180;
+      const ax = Math.cos(axisRad),  ay = -Math.sin(axisRad); // axis arm
+      const px = -ay,                py =  ax;                // perp arm (90° away)
+
+      // ── Draw arms ──────────────────────────────────────────────────
+      ctx.strokeStyle = '#2b6cb0';
+      ctx.lineWidth   = 2.5;
+      ctx.lineCap     = 'round';
+
+      ctx.beginPath();
+      ctx.moveTo(cx - ax * armLen, cy - ay * armLen);
+      ctx.lineTo(cx + ax * armLen, cy + ay * armLen);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx - px * armLen, cy - py * armLen);
+      ctx.lineTo(cx + px * armLen, cy + py * armLen);
+      ctx.stroke();
+
+      // Center dot
+      ctx.fillStyle = '#2b6cb0';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 4, 0, 2 * Math.PI);
+      ctx.fill();
+
+      // ── Helper: signed power string ─────────────────────────────────
+      function fmt(val) {
+        const s = Math.abs(val).toFixed(2);
+        return (val >= 0 ? '+' : '−') + s;
+      }
+
+      // ── Helper: draw a label at a point, rotated to align with its arm ─
+      function armLabel(text, subtext, ex, ey, dirX, dirY) {
+        ctx.save();
+        ctx.translate(ex, ey);
+        // Rotate text to run along the arm, then flip so it reads left→right
+        let angle = Math.atan2(dirY, dirX);
+        if (Math.cos(angle) < -0.01) angle += Math.PI; // keep text upright
+        ctx.rotate(angle);
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font         = 'bold 13px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillStyle    = '#2c5282';
+        ctx.fillText(text, 0, -8);
+        ctx.font      = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillStyle = '#718096';
+        ctx.fillText(subtext, 0, 7);
+        ctx.restore();
+      }
+
+      const axisAngle = axis % 180;
+      const perpAngle = (axis + 90) % 180;
+
+      // Label both ends of the axis arm
+      armLabel(fmt(powerAtAxis) + ' D', axisAngle + '°',
+               cx + ax * (armLen + labelGap), cy + ay * (armLen + labelGap),  ax,  ay);
+      armLabel(fmt(powerAtAxis) + ' D', axisAngle + '°',
+               cx - ax * (armLen + labelGap), cy - ay * (armLen + labelGap), -ax, -ay);
+
+      // Label both ends of the perp arm
+      armLabel(fmt(powerAtPerp) + ' D', perpAngle + '°',
+               cx + px * (armLen + labelGap), cy + py * (armLen + labelGap),  px,  py);
+      armLabel(fmt(powerAtPerp) + ' D', perpAngle + '°',
+               cx - px * (armLen + labelGap), cy - py * (armLen + labelGap), -px, -py);
+    }
+
+    // Allow Enter key to trigger calculation
+    document.addEventListener("keydown", e => {
+      if (e.key === "Enter") calculate();
+    });
+  </script>
+</body>
+</html>
